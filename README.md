@@ -41,7 +41,8 @@ npx hardhat run scripts/deploy.js --network sepolia
 ### Frontend
 
 ```bash
-cd frontend
+cd React
+cd carpool_react
 npm install
 npm run dev
 ```
