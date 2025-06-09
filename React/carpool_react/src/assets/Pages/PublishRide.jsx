@@ -400,7 +400,7 @@ const PublishRidePage = () => {
                   ) : paymentStatusByRideId[ride.rideId] ? (
                     <p className="text-green-600 font-medium">✔️ Payment Released</p>
                   ) : (
-                    <p className="text-sm text-yellow-200">
+                    <p className="text-sm text-blue-800">
                       Waiting for passengers to confirm
                     </p>
                   )}
