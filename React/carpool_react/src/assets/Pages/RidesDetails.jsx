@@ -5,12 +5,13 @@ import Footer from '../components/Footer';
 import { body,side} from '../Public/images.jsx';
 import { getRideById } from '../Functions/functions.js';
 import { ethers } from 'ethers';
-import { connectWallet1 } from '../Functions/functions.js';
+import { connectWallet1,confirmRideCompleted,checkIfPassengerConfirmed } from '../Functions/functions.js';
 
 const RideDetailsPage = () => {
 
   const { rideId } = useParams();
   const [ride, setRide] = useState(null);
+  const [hasConfirmed, setHasConfirmed] = useState(false);
 
   const [walletAddress, setWalletAddress] = useState("");
 
@@ -22,17 +23,56 @@ const RideDetailsPage = () => {
       loadWallet();
     }, []);
 
-  useEffect(() => {
-    const fetchRide = async () => {
+
+
+    useEffect(() => {
+      const fetchRide = async () => {
+        try {
+          const data = await getRideById(rideId);
+          setRide(data);
+        } catch (err) {
+          console.error("Error fetching ride:", err);
+        }
+      };
+      fetchRide();
+    }, [rideId]);
+
+
+    useEffect(() => {
+      const checkRideCompletion = async () => {
+        try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const signer = await provider.getSigner();
+          const userAddress = signer.address;
+
+          const confirmed = await checkIfPassengerConfirmed(rideId, userAddress);
+          setHasConfirmed(confirmed);
+        } catch (err) {
+          console.error("Error checking ride confirmation:", err);
+        }
+      };
+
+      checkRideCompletion();
+    }, [rideId]);
+
+
+
+
+    const handleConfirmRide = async () => {
       try {
-        const data = await getRideById(rideId);
-        setRide(data);
+        const tx = await confirmRideCompleted(ride.rideId);
+        await tx.wait();
+
+        setHasConfirmed(true);
+        alert(" Ride marked as completed!");
+        
       } catch (err) {
-        console.error("Error fetching ride:", err);
+        alert(" Failed to confirm ride.");
+        console.error(err);
       }
     };
-    fetchRide();
-  }, [rideId]);
+
+
 
   if (!ride) return <div className="text-white text-center py-20">Loading Ride Details...</div>;
   
@@ -79,6 +119,19 @@ const RideDetailsPage = () => {
                 </p>
 
               </div>
+
+                {hasConfirmed ? (
+                  <p className="text-green-800 mt-2">✔ Ride marked as completed</p>
+                ) : (
+                  <button
+                    onClick={handleConfirmRide}
+                    className="bg-green-600 text-white px-4 py-2 rounded mt-4 hover:bg-green-700"
+                  >
+                    ✔ Mark Ride as Completed
+                  </button>
+                )}
+
+
             </div>
           </div>
 

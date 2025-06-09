@@ -204,6 +204,37 @@ export const bookRide = async (rideId,fare) => {
     
 };
 
+export const confirmRideCompleted = async (rideId) => {
+  const provider = new BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+  const tx = await contract.confirmRideCompleted(rideId);
+  const receipt = await tx.wait();
+  return receipt;
+};
+
+export const checkIfPassengerConfirmed = async (rideId, passengerAddress) => {
+  const provider = new BrowserProvider(window.ethereum);
+  const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+
+  return await contract.rideCompletedConfirmations(rideId, passengerAddress);
+};
+
+export const checkAllConfirmations = async (rideId) => {
+  const provider = new BrowserProvider(window.ethereum);
+  const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+  const result = await contract.allPassengersConfirmed(rideId);
+  return result;
+};
+
+export const checkIfRiderCanRelease = async (rideId) => {
+  const provider = new BrowserProvider(window.ethereum);
+  const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+  const confirmed = await contract.allPassengersConfirmed(rideId);
+  return confirmed;
+};
+
 
 export const releasePaymentToRider = async (rideId) => {
   try {

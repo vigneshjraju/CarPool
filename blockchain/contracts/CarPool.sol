@@ -28,6 +28,9 @@ contract carpooling {
     // Track how much each passenger paid per ride
     mapping(uint => mapping(address => uint)) public passengerPayments;
 
+    // Track which passengers completed the ride
+    mapping(uint => mapping(address => bool)) public rideCompletedConfirmations;
+
     
 
     Ride[] public rides;
@@ -151,8 +154,39 @@ contract carpooling {
         emit RideBooked(_rideId, msg.sender);
     }
 
+
+    //Passenger Confirmation
+    function confirmRideCompleted(uint rideId) public {
+        require(rideId < rides.length, "Invalid ride ID");
+
+        // Must be one of the passengers
+        address[] memory passengers = passengersByRide[rideId];
+        bool isPassenger = false;
+        for (uint i = 0; i < passengers.length; i++) {
+            if (passengers[i] == msg.sender) {
+                isPassenger = true;
+                break;
+            }
+        }
+        require(isPassenger, "Not a passenger for this ride");
+
+        rideCompletedConfirmations[rideId][msg.sender] = true;
+    }
+
+    function allPassengersConfirmed(uint rideId) public view returns (bool) {
+        address[] memory passengers = passengersByRide[rideId];
+        for (uint i = 0; i < passengers.length; i++) {
+            if (!rideCompletedConfirmations[rideId][passengers[i]]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     function releasePaymentToRider(uint rideId) public {
         require(rideId < rides.length, "Invalid ride ID");
+        require(allPassengersConfirmed(rideId), "Passengers haven't all confirmed ride.");
         require(msg.sender == rideOwner[rideId], "Only rider can withdraw");
         require(!paymentReleased[rideId], "Payment already released");
 

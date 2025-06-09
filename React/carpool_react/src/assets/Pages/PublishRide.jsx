@@ -8,8 +8,8 @@ import {  Contract, ethers,BrowserProvider } from "ethers";
 import { CONTRACT_ABI } from '../abi/abi.js';
 import { useNavigate } from 'react-router-dom';
 import { connectWallet1 } from '../Functions/functions.js';
-import { releasePaymentToRider } from '../Functions/functions.js';
-import { checkPaymentReleased } from '../Functions/functions.js';
+import { releasePaymentToRider,checkPaymentReleased,checkIfRiderCanRelease } from '../Functions/functions.js';
+
 
 
 const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
@@ -18,7 +18,7 @@ const PublishRidePage = () => {
 
   const navigate = useNavigate();
 
-
+  //1
   const [walletAddress, setWalletAddress] = useState("");
 
     useEffect(() => {
@@ -30,13 +30,25 @@ const PublishRidePage = () => {
 	}, []);
 
 
+  //2
+  const [canReleaseByRide, setCanReleaseByRide] = useState({});
+  const fetchReleaseStatuses = async (rides) => {
+    const map = {};
 
-  
+    for (let ride of rides) {
+      const canRelease = await checkIfRiderCanRelease(ride.rideId);
+      map[ride.rideId] = canRelease;
+    }
+    setCanReleaseByRide(map);
+  };
+
+
+
+  //3
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
   const [publishedRides, setPublishedRides] = useState([]);
   const [paymentStatusByRideId, setPaymentStatusByRideId] = useState({});
-
   const fetchPaymentStatuses = async (rides) => {
 
         const statusMap = {};
@@ -55,7 +67,10 @@ const PublishRidePage = () => {
               try {
                 const rides = await getUserPublishedRides(signer, contract);
                 setPublishedRides(rides);
+
                 await fetchPaymentStatuses(rides); // 👈 check statuses
+                await fetchReleaseStatuses(rides);
+
               } catch (err) {
                 console.error("Error loading published rides:", err);
               }
@@ -69,99 +84,100 @@ const PublishRidePage = () => {
 
 
 
+    //4
+    useEffect(() => {
+      const loadBlockchain = async () => {
+        if (window.ethereum) {
+          const provider = new BrowserProvider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          const signerInstance = await provider.getSigner();
+  
+          const contractInstance = new Contract(CONTRACT_ADDRESS,CONTRACT_ABI, signerInstance);
+  
+          setSigner(signerInstance);
+          setContract(contractInstance);
+        } else {
+          alert("Install MetaMask");
+        }
+      };
+      loadBlockchain();
+    }, []);
 
 
-  const [formData, setFormData] = useState({
-    carModel: '',
-    carNumber: '',
-    origin: '',
-    destination: '',
-    departureTime: '',
-    fare: '',
-    seats: ''
-  });
+
+  //5
+    const [formData, setFormData] = useState({
+      carModel: '',
+      carNumber: '',
+      origin: '',
+      destination: '',
+      departureTime: '',
+      fare: '',
+      seats: ''
+    });
 
 
-  useEffect(() => {
-    const loadBlockchain = async () => {
-      if (window.ethereum) {
-        const provider = new BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        const signerInstance = await provider.getSigner();
-
-        const contractInstance = new Contract(CONTRACT_ADDRESS,CONTRACT_ABI, signerInstance);
-
-        setSigner(signerInstance);
-        setContract(contractInstance);
-      } else {
-        alert("Install MetaMask");
-      }
+    const handleChange = e => {
+      const { name, value } = e.target;
+      setFormData(prev => ({ ...prev, [name]: value }));
     };
-    loadBlockchain();
-  }, []);
 
+    const handleSubmit = async e => {
+          e.preventDefault();
+          const { carModel, carNumber, origin, destination, departureTime, seats, fare } = formData;
 
+          const timestamp = Math.floor(new Date(departureTime).getTime() / 1000); // Convert to UNIX
 
-
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async e => {
-      e.preventDefault();
-      const { carModel, carNumber, origin, destination, departureTime, seats, fare } = formData;
-
-      const timestamp = Math.floor(new Date(departureTime).getTime() / 1000); // Convert to UNIX
-
-      if (!contract || !signer) {
-        alert("Blockchain not ready");
-        return;
-      }
-
-      try{
-
-          
-          const weiFare = BigInt(formData.fare); // keep as Wei
-
-          const rideId = await newRide(
-            signer,
-            contract,
-            origin,
-            destination,
-            timestamp,
-            weiFare,
-            parseInt(seats),
-            carModel,
-            carNumber
-          );
-
-          if (rideId === null) {
-            throw new Error("Ride ID not returned");
+          if (!contract || !signer) {
+            alert("Blockchain not ready");
+            return;
           }
 
-          alert("Ride published successfully!");
+          try{
 
-            setFormData({
-              carModel: '',
-              carNumber: '',
-              origin: '',
-              destination: '',
-              departureTime: '',
-              seats: '',
-              fare: ''
-          });
+              
+              const weiFare = BigInt(formData.fare); // keep as Wei
 
-          navigate(`/bookedpassenger/${rideId}`);
+              const rideId = await newRide(
+                signer,
+                contract,
+                origin,
+                destination,
+                timestamp,
+                weiFare,
+                parseInt(seats),
+                carModel,
+                carNumber
+              );
 
-      } 
-      
-    catch (error) {
-        console.error("Error in publishing ride:", error);
-        alert("Failed to publish ride. Please try again.");
-      }
-  };
+              if (rideId === null) {
+                throw new Error("Ride ID not returned");
+              }
 
+              alert("Ride published successfully!");
+
+                setFormData({
+                  carModel: '',
+                  carNumber: '',
+                  origin: '',
+                  destination: '',
+                  departureTime: '',
+                  seats: '',
+                  fare: ''
+              });
+
+              navigate(`/bookedpassenger/${rideId}`);
+
+          } 
+          
+        catch (error) {
+            console.error("Error in publishing ride:", error);
+            alert("Failed to publish ride. Please try again.");
+          }
+    };
+
+
+    //6
   const handleDeleteRide = async (rideId) => {
 
       if (!contract || !signer) {
@@ -187,6 +203,8 @@ const PublishRidePage = () => {
       }
   };
 
+
+  //7
   const [releasing, setReleasing] = useState(null); // store rideId
 
   const handleReleasePayment = async (rideId) => {
@@ -379,18 +397,16 @@ const PublishRidePage = () => {
                   </div>
 
                   <div className="mt-2 text-center">
-                    {!paymentStatusByRideId[ride.rideId] ? (
-                      <button
-                        disabled={releasing === ride.rideId}
-                        onClick={() => handleReleasePayment(ride.rideId)}
-                        className={`px-4 py-1 mt-2 rounded ${
-                          releasing === ride.rideId ? "bg-gray-400" : "bg-green-700 hover:bg-green-500"
-                        } text-white`}
-                      >
-                        {releasing === ride.rideId ? "Releasing..." : "Release Payment"}
+                    {!paymentStatusByRideId[ride.rideId] && canReleaseByRide[ride.rideId] ? (
+                      <button 
+                      className="mt-2 px-4 py-1 bg-green-900 text-white rounded hover:bg-red-700"
+                      onClick={() => handleReleasePayment(ride.rideId)}>
+                        Release Payment
                       </button>
+                    ) : paymentStatusByRideId[ride.rideId] ? (
+                      <p>✔️ Payment Released</p>
                     ) : (
-                      <p className="text-green-500 mt-2">✔️ Payment Released</p>
+                      <p className="text-sm text-black">Waiting for passengers to confirm for the Payment</p>
                     )}
                   </div>
 
