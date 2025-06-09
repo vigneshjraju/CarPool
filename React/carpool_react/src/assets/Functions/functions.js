@@ -38,16 +38,22 @@ export const getContract = async (useSigner = true) => {
 export const getUserAddress = async () => {
   const provider = new BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
-  return signer.getAddress();
+  return signer.address;
 };
 
 
 
 
 
-export const getUserPublishedRides = async (signer, contract) => {
-  const userAddress = await signer.getAddress();
-  const allRides = await contract.getAllRides();
+export const getUserPublishedRides = async () => {
+
+  const provider = new BrowserProvider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  const signer = await provider.getSigner();
+  const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+  const userAddress = await signer.address;
+  const allRides = await contract.getActiveRides();
   const publishedRides = [];
 
   for (let ride of allRides) {
@@ -196,6 +202,40 @@ export const bookRide = async (rideId,fare) => {
   }
 
     
+};
+
+
+export const releasePaymentToRider = async (rideId) => {
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = await provider.getSigner();
+    const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+    const tx = await contract.releasePaymentToRider(rideId); // Call contract
+    const receipt = await tx.wait();
+
+    console.log("Ride payment released. Block:", receipt.blockNumber);
+    return true;
+  } catch (err) {
+    console.error("Failed to release payment:", err);
+    throw err;
+  }
+};
+
+export const checkPaymentReleased = async (rideId) => {
+
+  try{
+    const provider = new BrowserProvider(window.ethereum);
+    const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    
+    const isReleased = await contract.paymentReleased(rideId);
+    return isReleased;
+
+  } catch (error) {
+    console.error("Error checking payment status:", error);
+    return false;
+  }
 };
 
 

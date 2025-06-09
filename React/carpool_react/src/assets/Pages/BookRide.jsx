@@ -4,11 +4,14 @@ import Headerwallet from '../components/Header2';
 import Footer from '../components/Footer';
 import { body,side} from '../Public/images.jsx';
 import { searchRide,fetchAllRides } from '../Functions/functions.js';
-import { bookRide } from '../Functions/functions.js';
+import { bookRide,getUserAddress } from '../Functions/functions.js';
 import { ethers } from 'ethers';
 import { connectWallet1 } from '../Functions/functions.js';
+import { CONTRACT_ABI } from '../abi/abi.js';
+import { BrowserProvider,Contract } from 'ethers';
 
 
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
 
 
 const BookRidePage = () => {
@@ -80,16 +83,38 @@ const BookRidePage = () => {
   const handleBookRide = async (ride) => {
     try {
           //  Add safety check here
-    if (Number(ride.fare) > 1000000) {
-      alert("⚠️ Fare is too high! Please contact the ride owner to fix this.");
-      return;
-    }
-      const rideId = ride.rideId;
-      const fareInWei = BigInt(ride.fare);
+      if (Number(ride.fare) > 1000000) {
+        alert("Fare is too high! Please contact the ride owner to fix this.");
+        return;
+      }
 
+      const rideId = ride.rideId;
+      
+      //  Prevent double booking
+      const userAddress = await getUserAddress(); // gets connected wallet
+      // 📦 Reconnect contract
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+      
+      const passengers = await contract.getPassengersForRide(rideId);
+
+      const alreadyBooked = passengers
+        .map(addr => addr.toLowerCase())
+        .includes(userAddress.toLowerCase());
+
+      if (alreadyBooked) {
+        alert("You Have already booked this ride.");
+        return;
+      }
+      
+      
+      const fareInWei = BigInt(ride.fare);
       const bookingSuccess = await bookRide(rideId, fareInWei); // pass fare in WEI
+
       if (bookingSuccess) {
         navigate(`/ridesdetails/${rideId}`);
+        window.open(`https://sepolia.etherscan.io/tx/${bookingSuccess}`, "_blank");
       }
     } catch (error) {
       console.error("Error booking ride:", error);

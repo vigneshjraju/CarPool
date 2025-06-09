@@ -23,6 +23,12 @@ contract carpooling {
     mapping(address => Human) public addressDetails;
     mapping(uint => address) public rideOwner;
     mapping(uint => address[]) public passengersByRide;
+    mapping(uint => bool) public paymentReleased;
+
+    // Track how much each passenger paid per ride
+    mapping(uint => mapping(address => uint)) public passengerPayments;
+
+    
 
     Ride[] public rides;
     uint public rideCount = 0;
@@ -124,6 +130,7 @@ contract carpooling {
 
     // Events
     event RidePaid(address indexed from, address indexed to, uint amount);
+    event RidePaymentReleased(uint rideId, address rider, uint amount);
 
     // Book a ride
     function bookRide(uint _rideId) public payable {
@@ -137,12 +144,40 @@ contract carpooling {
         passengersByRide[_rideId].push(msg.sender);
 
         // Transfer the fare to the ride owner
-        payable(rideOwner[_rideId]).transfer(msg.value);
+        passengerPayments[_rideId][msg.sender] = msg.value;
 
         emit RidePaid(msg.sender, rideOwner[_rideId], msg.value);
 
         emit RideBooked(_rideId, msg.sender);
     }
+
+    function releasePaymentToRider(uint rideId) public {
+        require(rideId < rides.length, "Invalid ride ID");
+        require(msg.sender == rideOwner[rideId], "Only rider can withdraw");
+        require(!paymentReleased[rideId], "Payment already released");
+
+        address[] memory passengers = passengersByRide[rideId];
+        uint totalAmount = 0;
+
+        for (uint i = 0; i < passengers.length; i++) {
+            address passenger = passengers[i];
+            uint amount = passengerPayments[rideId][passenger];
+
+            if (amount > 0) {
+                passengerPayments[rideId][passenger] = 0;
+                totalAmount += amount;
+            }
+        }
+
+        require(totalAmount > 0, "No fares to withdraw");
+
+        paymentReleased[rideId] = true; // Set flag!
+        payable(msg.sender).transfer(totalAmount);
+
+        emit RidePaymentReleased(rideId, msg.sender, totalAmount);
+
+    }
+
 
 
     // Get all rides

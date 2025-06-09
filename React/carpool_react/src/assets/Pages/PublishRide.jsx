@@ -3,16 +3,21 @@ import { newRide,getUserPublishedRides } from '../Functions/functions.js';
 import Headerwallet from '../components/Header2';
 import Footer from '../components/Footer';
 import { body,side} from '../Public/images.jsx';
-import {  Contract, ethers } from "ethers";
-import { Web3Provider } from "@ethersproject/providers";
+import {  Contract, ethers,BrowserProvider } from "ethers";
+// import { Web3Provider } from "@ethersproject/providers";
 import { CONTRACT_ABI } from '../abi/abi.js';
 import { useNavigate } from 'react-router-dom';
 import { connectWallet1 } from '../Functions/functions.js';
+import { releasePaymentToRider } from '../Functions/functions.js';
+import { checkPaymentReleased } from '../Functions/functions.js';
 
 
 const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
 
 const PublishRidePage = () => {
+
+  const navigate = useNavigate();
+
 
   const [walletAddress, setWalletAddress] = useState("");
 
@@ -23,30 +28,46 @@ const PublishRidePage = () => {
       };
       loadWallet();
 	}, []);
- 
 
+
+
+  
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
-  const navigate = useNavigate();
-
   const [publishedRides, setPublishedRides] = useState([]);
+  const [paymentStatusByRideId, setPaymentStatusByRideId] = useState({});
 
-  useEffect(() => {
-    
-    const fetchPublishedRides = async () => {
-      if (contract && signer) {
-        try {
-          const rides = await getUserPublishedRides(signer, contract);
-          setPublishedRides(rides);
-        } catch (err) {
-          console.error("Error loading published rides:", err);
+  const fetchPaymentStatuses = async (rides) => {
+
+        const statusMap = {};
+        for (let ride of rides) {
+          const released = await checkPaymentReleased(ride.rideId);
+          statusMap[ride.rideId] = released;
         }
-      }
-    };
+        setPaymentStatusByRideId(statusMap);
+  };
 
-    fetchPublishedRides();
 
-  }, [contract, signer]);
+      useEffect(() => {
+
+          const fetchPublishedRides = async () => {
+            if (contract && signer) {
+              try {
+                const rides = await getUserPublishedRides(signer, contract);
+                setPublishedRides(rides);
+                await fetchPaymentStatuses(rides); // 👈 check statuses
+              } catch (err) {
+                console.error("Error loading published rides:", err);
+              }
+            }
+          };
+
+      fetchPublishedRides();
+      
+    }, [contract, signer]);
+ 
+
+
 
 
 
@@ -64,10 +85,12 @@ const PublishRidePage = () => {
   useEffect(() => {
     const loadBlockchain = async () => {
       if (window.ethereum) {
-        const provider = new Web3Provider(window.ethereum);
+        const provider = new BrowserProvider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
-        const signerInstance = provider.getSigner();
+        const signerInstance = await provider.getSigner();
+
         const contractInstance = new Contract(CONTRACT_ADDRESS,CONTRACT_ABI, signerInstance);
+
         setSigner(signerInstance);
         setContract(contractInstance);
       } else {
@@ -161,6 +184,25 @@ const PublishRidePage = () => {
       } catch (err) {
         console.error("Failed to delete ride:", err);
         alert("Failed to delete ride. You must be the owner.");
+      }
+  };
+
+  const [releasing, setReleasing] = useState(null); // store rideId
+
+  const handleReleasePayment = async (rideId) => {
+    try {
+      if (!window.confirm(`Release payment for Ride ID ${rideId}?`)) return;
+
+        setReleasing(rideId); // disable button
+        const success = await releasePaymentToRider(rideId);
+        if (success) {
+          alert(`Payment released for Ride #${rideId}`);
+          setPaymentStatusByRideId(prev => ({ ...prev, [rideId]: true }));
+        }
+      } catch (err) {
+        alert(`Failed to release payment: ${err.reason || err.message}`);
+      } finally {
+        setReleasing(null);
       }
   };
 
@@ -334,6 +376,22 @@ const PublishRidePage = () => {
                     </button>
 
                     
+                  </div>
+
+                  <div className="mt-2 text-center">
+                    {!paymentStatusByRideId[ride.rideId] ? (
+                      <button
+                        disabled={releasing === ride.rideId}
+                        onClick={() => handleReleasePayment(ride.rideId)}
+                        className={`px-4 py-1 mt-2 rounded ${
+                          releasing === ride.rideId ? "bg-gray-400" : "bg-green-700 hover:bg-green-500"
+                        } text-white`}
+                      >
+                        {releasing === ride.rideId ? "Releasing..." : "Release Payment"}
+                      </button>
+                    ) : (
+                      <p className="text-green-500 mt-2">✔️ Payment Released</p>
+                    )}
                   </div>
 
                 </div>

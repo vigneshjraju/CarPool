@@ -81,9 +81,9 @@ const AvailableRidesPage = () => {
                 >
                   <div className="text-black w-3/4">
                     <p>
-                      <strong>From:</strong> {ride.origin}  
-                      <strong>To:</strong> {ride.destination}  
-                      <strong>Seats:</strong> {ride.seats}  
+                      <strong>From:</strong> {ride.origin} <br /> 
+                      <strong>To:</strong> {ride.destination}   <br />
+                      <strong>Seats:</strong> {ride.seats}  <br />
                       <strong>Fare:</strong> {ride.fare} Wei
                     </p>
                     <p className="mt-1"><strong>Time:</strong> {ride.departureTime}</p>
