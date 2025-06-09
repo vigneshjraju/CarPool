@@ -59,7 +59,7 @@ Create a `.env` file in the Hardhat (blockchain) directory:
 
 ```
 PRIVATE_KEY=your_private_key
-SEPOLIA_URL=https://eth-sepolia.g.alchemy.com/v2/sepolia_id
+SEPOLIA_URL=https://eth-sepolia.g.alchemy.com/v2/sepolia_api-key
 ```
 
 
