@@ -222,12 +222,15 @@ const BookRidePage = () => {
       <br />
 
       {/* All Rides Section */}
-        <section className="w-3/5  justify-center ml-[350px]  bg-gray-800 bg-opacity-80 rounded-3xl p-6 text-black shadow-lg">
-          <h3 className="text-xl text-center text-teal-300 font-semibold mb-6">All Available Rides</h3>
+        <section className="w-full px-4 md:w-4/5 lg:w-3/5 mx-auto bg-gray-800 bg-opacity-80 rounded-3xl p-6 text-black shadow-lg">
+          <h3 className="text-xl text-center text-teal-300 font-semibold mb-6">
+            All Available Rides
+          </h3>
+
           {allRides.length === 0 ? (
             <p className="text-center text-gray-500">No rides available.</p>
           ) : (
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-6">
               {allRides.map((ride) => (
                 <div
                   key={ride.rideId}
@@ -237,14 +240,9 @@ const BookRidePage = () => {
                   <p><strong>To:</strong> {ride.destination}</p>
                   <p><strong>Time:</strong> {ride.departureTime}</p>
                   <p><strong>Seats:</strong> {ride.seats}</p>
-
-                  <p>
-                    <strong>Fare:</strong> {ride.fare} Wei
-                  </p>
-
+                  <p><strong>Fare:</strong> {ride.fare} Wei</p>
                   <p><strong>Car:</strong> {ride.carModel} ({ride.carNumber})</p>
 
-                  {/* Book button */}
                   <div className="mt-4 text-center">
                     <button
                       onClick={() => handleBookRide(ride)}
@@ -253,12 +251,12 @@ const BookRidePage = () => {
                       Book
                     </button>
                   </div>
-
                 </div>
               ))}
             </div>
           )}
         </section>
+
         <br />
 
       <Footer />

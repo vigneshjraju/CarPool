@@ -4,6 +4,6 @@
 const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
 
 module.exports = buildModule("CarPoolModule", (m) => {
-  const carpooling = m.contract("carpooling"); // ✅ match contract name exactly
+  const carpooling = m.contract("carpooling"); //contract name
   return { carpooling };
 });

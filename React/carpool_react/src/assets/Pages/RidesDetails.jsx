@@ -61,7 +61,7 @@ const RideDetailsPage = () => {
     const handleConfirmRide = async () => {
       try {
         const tx = await confirmRideCompleted(ride.rideId);
-        await tx.wait();
+        // await tx.wait();
 
         setHasConfirmed(true);
         alert(" Ride marked as completed!");

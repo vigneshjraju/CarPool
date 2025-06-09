@@ -355,66 +355,61 @@ const PublishRidePage = () => {
         </div>
       </main>
 
-      {/* Published Rides Section */}
-        {publishedRides.length > 0 && (
-          <section className="w-3/5 justify-center ml-[350px] bg-gray-800 bg-opacity-80 rounded-3xl p-6 text-black shadow-lg mt-8">
-            <h3 className="text-xl text-center text-teal-300 font-semibold mb-6">Your Published Rides</h3>
-            <div className="grid md:grid-cols-2 gap-6">
-              {publishedRides.map((ride) => (
-                <div
-                  key={ride.rideId}
-                  className="p-4 bg-gray-100 rounded-xl shadow border border-teal-300"
-                >
-                  <p><strong>Ride ID:</strong> {ride.rideId}</p>
-                  <p><strong>From:</strong> {ride.origin}</p>
-                  <p><strong>To:</strong> {ride.destination}</p>
-                  <p><strong>Departure:</strong> {ride.departureTime}</p>
-                 
-                  <p><strong>Fare:</strong> {ride.fare} WEI</p>
+      {publishedRides.length > 0 && (
+        <section className="w-full px-4 md:w-4/5 lg:w-3/5 mx-auto bg-gray-800 bg-opacity-80 rounded-3xl p-6 text-black shadow-lg mt-8">
+          <h3 className="text-xl text-center text-teal-300 font-semibold mb-6">Your Published Rides</h3>
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-6">
+            {publishedRides.map((ride) => (
+              <div
+                key={ride.rideId}
+                className="p-4 bg-gray-100 rounded-xl shadow border border-teal-300"
+              >
+                <p><strong>Ride ID:</strong> {ride.rideId}</p>
+                <p><strong>From:</strong> {ride.origin}</p>
+                <p><strong>To:</strong> {ride.destination}</p>
+                <p><strong>Departure:</strong> {ride.departureTime}</p>
+                <p><strong>Fare:</strong> {ride.fare} WEI</p>
+                <p><strong>Seats Left:</strong> {ride.seats}</p>
 
-                  <p><strong>Seats Left:</strong> {ride.seats}</p>
-
-                  {/* View Passengers button */}
-                  <div className="mt-4 text-center">
-                    <button
-                      onClick={() => navigate(`/bookedpassenger/${ride.rideId}`)}
-                      className="px-6 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-400"
-                    >
-                      View Passengers
-                    </button>
-                    
-                  </div>
-
-                  <div className="mt-4 text-center">
-                    <button
-                      onClick={() => handleDeleteRide(ride.rideId)}
-                      className="mt-2 px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                    >
-                      Delete Ride
-                    </button>
-
-                    
-                  </div>
-
-                  <div className="mt-2 text-center">
-                    {!paymentStatusByRideId[ride.rideId] && canReleaseByRide[ride.rideId] ? (
-                      <button 
-                      className="mt-2 px-4 py-1 bg-green-900 text-white rounded hover:bg-red-700"
-                      onClick={() => handleReleasePayment(ride.rideId)}>
-                        Release Payment
-                      </button>
-                    ) : paymentStatusByRideId[ride.rideId] ? (
-                      <p>✔️ Payment Released</p>
-                    ) : (
-                      <p className="text-sm text-black">Waiting for passengers to confirm for the Payment</p>
-                    )}
-                  </div>
-
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => navigate(`/bookedpassenger/${ride.rideId}`)}
+                    className="px-6 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-400"
+                  >
+                    View Passengers
+                  </button>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => handleDeleteRide(ride.rideId)}
+                    className="mt-2 px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    Delete Ride
+                  </button>
+                </div>
+
+                <div className="mt-2 text-center">
+                  {!paymentStatusByRideId[ride.rideId] && canReleaseByRide[ride.rideId] ? (
+                    <button 
+                      className="mt-2 px-4 py-1 bg-green-900 text-white rounded hover:bg-green-700"
+                      onClick={() => handleReleasePayment(ride.rideId)}
+                    >
+                      Release Payment
+                    </button>
+                  ) : paymentStatusByRideId[ride.rideId] ? (
+                    <p className="text-green-600 font-medium">✔️ Payment Released</p>
+                  ) : (
+                    <p className="text-sm text-yellow-200">
+                      Waiting for passengers to confirm
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
         <br />
 
