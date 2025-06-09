@@ -7,7 +7,10 @@ CarPool is a decentralized Peer-to-Peer (P2P) carpooling DApp built on the Ether
 
 - 🧾 **Register Users**: Users can register with name, age, and gender.
 - 📤 **Publish a Ride**: Ride owners can publish rides with car details, fare, and available seats.
-- 📥 **Book a Ride**: Users can book rides by paying ETH directly to the ride owner.
+- 📥 **Book a Ride**: Passengers can book rides by paying in ETH (in Wei).
+- 💰 **Funds**:  Funds are held in the smart contract (escrow)
+- 💰 **Funds**:  Riders release payment **after ride is completed**
+- ♻️ **Funds**:  Prevents double withdrawal.
 - 👥 **View Passengers**: Ride publishers can see a list of passengers for each ride.
 - 🔍 **Search Rides**: Passengers can search for rides by origin, destination, and time.
 - 🔒 **MetaMask Integration**: Wallet connection and authentication.
@@ -24,7 +27,7 @@ CarPool is a decentralized Peer-to-Peer (P2P) carpooling DApp built on the Ether
 
 ### Prerequisites
 
-- Node.js & npm
+- Node.js
 - MetaMask Extension
 - Git
 - Hardhat (`npm install --save-dev hardhat`)
